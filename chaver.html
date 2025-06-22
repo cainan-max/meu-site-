@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jogo - Personagem com Ações</title>
+
+  <style>
+    /* Tema VS Code - style.css */
+:root {
+  --bg-dark: #1e1e1e;
+  --text-dark: #d4d4d4;
+  --sidebar-dark: #252526;
+  --tab-dark: #2d2d2d;
+  --active-tab-dark: #1e1e1e;
+  --highlight-dark: #0e639c;
+
+  --bg-light: #f0f0f0;
+  --text-light: #222;
+  --sidebar-light: #ddd;
+  --tab-light: #ccc;
+  --active-tab-light: #fff;
+  --highlight-light: #007acc;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.light-theme {
+  background-color: var(--bg-light);
+  color: var(--text-light);
+}
+
+.editor-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: var(--sidebar-dark);
+  padding: 15px 12px;
+  border-right: 1px solid #444;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+body.light-theme .sidebar {
+  background-color: var(--sidebar-light);
+  border-color: #bbb;
+}
+
+.sidebar h2 {
+  font-size: 1.1rem;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+#file-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0 0 12px 0;
+  list-style: none;
+}
+
+#file-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  transition: background-color 0.15s;
+}
+
+#file-list li:hover {
+  background-color: #3a3d41;
+}
+
+body.light-theme #file-list li:hover {
+  background-color: #bbb;
+}
+
+#file-list li.active {
+  background-color: var(--highlight-dark);
+  color: white;
+}
+
+body.light-theme #file-list li.active {
+  background-color: var(--highlight-light);
+  color: white;
+}
+
+#file-list li button.delete-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 6px;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+#file-list li button.delete-btn:hover {
+  color: #ff5555;
+}
+
+.sidebar button#new-file-btn {
+  background-color: var(--highlight-dark);
+  color: white;
+  border: none;
+  padding: 10px 0;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+
+body.light-theme button#new-file-btn {
+  background-color: var(--highlight-light);
+}
+
+.sidebar button#new-file-btn:hover {
+  background-color: #074a8b;
+}
+
+body.light-theme button#new-file-btn:hover {
+  background-color: #005a9e;
+}
+
+.main-editor {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.top-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+}
+
+.top-bar button {
+  background-color: var(--highlight-dark);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  user-select: none;
+}
+
+body.light-theme .top-bar button {
+  background-color: var(--highlight-light);
+  color: white;
+}
+
+.top-bar button:hover {
+  background-color: #074a8b;
+}
+
+body.light-theme .top-bar button:hover {
+  background-color: #005a9e;
+}
+
+.tab-bar {
+  display: flex;
+  background-color: var(--tab-dark);
+  padding: 6px 10px;
+  gap: 8px;
+  border-bottom: 1px solid #444;
+  box-sizing: border-box;
+}
+
+body.light-theme .tab-bar {
+  background-color: var(--tab-light);
+  border-color: #bbb;
+}
+
+.tab-bar button {
+  background: #3c3c3c;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  font-weight: 500;
+  user-select: none;
+  transition: background-color 0.25s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.light-theme .tab-bar button {
+  background: #ccc;
+  color: #222;
+}
+
+.tab-bar button.active {
+  background-color: var(--active-tab-dark);
+  font-weight: 700;
+}
+
+body.light-theme .tab-bar button.active {
+  background-color: var(--active-tab-light);
+}
+
+#monaco-editor,
+#preview {
+  flex-grow: 1;
+  display: none;
+  height: calc(100vh - 100px);
+  box-sizing: border-box;
+}
+
+#monaco-editor.active,
+#preview.active {
+  display: block;
+}
+
+#preview iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--tab-dark);
+  padding: 10px 15px;
+  border-top: 1px solid #444;
+}
+
+body.light-theme .controls {
+  background-color: var(--tab-light);
+  border-color: #bbb;
+}
+
+.controls select,
+.controls button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  user-select: none;
+  transition: background-color 0.25s;
+}
+
+.controls select {
+  min-width: 120px;
+}
+
+.controls select:focus {
+  outline: 2px solid var(--highlight-dark);
+}
+
+body.light-theme .controls select:focus {
+  outline-color: var(--highlight-light);
+}
+
+.controls button {
+  background-color: var(--highlight-dark);
+  color: white;
+}
+
+body.light-theme .controls button {
+  background-color: var(--highlight-light);
+}
+
+.controls button:hover {
+  background-color: #074a8b;
+}
+
+body.light-theme .controls button:hover {
+  background-color: #005a9e;
+}
+
+#run.loading {
+  position: relative;
+  pointer-events: none;
+  color: transparent !important;
+}
+
+#run.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -10px 0 0 -10px;
+  width: 20px;
+  height: 20px;
+  border: 3px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+body.light-theme #run.loading::after {
+  border: 3px solid #222;
+  border-top-color: transparent;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#file-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+#file-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#file-list::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+body.light-theme #file-list::-webkit-scrollbar-thumb {
+  background-color: #555;
+}
+
+  </style>
+
+  
+</head>
+<body>
+  <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor VS Code Online</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+</head>
+<body>
+  <div class="editor-container">
+    <aside class="sidebar" role="navigation" aria-label="Lista de arquivos">
+      <h2>Arquivos</h2>
+      <ul id="file-list" role="list"></ul>
+      <button id="new-file-btn" aria-label="Criar novo arquivo">+ Novo Arquivo</button>
+    </aside>
+
+    <main class="main-editor" role="main">
+      <div class="top-bar" aria-label="Controles superiores">
+        <button id="toggle-theme" aria-pressed="false" title="Alternar tema claro/escuro">🌗 Alternar Tema</button>
+        <button id="voltar-editor" style="display:none;" title="Voltar para editor">🔙 Voltar ao Editor</button>
+      </div>
+
+      <nav class="tab-bar" aria-label="Abas de arquivos" role="tablist" id="tab-bar"></nav>
+
+      <section id="monaco-editor" class="editor-area active" role="tabpanel" aria-label="Editor de código"></section>
+      <section id="preview" class="preview-area" role="tabpanel" aria-label="Visualização do código"></section>
+
+      <div class="controls">
+        <label for="language" style="font-weight: 600;">Linguagem:</label>
+        <select id="language" aria-describedby="language-desc">
+          <option value="html">HTML</option>
+          <option value="javascript">JavaScript</option>
+          <option value="css">CSS</option>
+          <option value="python">Python</option>
+          <option value="plaintext">Texto</option>
+        </select>
+
+        <button id="save" aria-label="Salvar alterações do arquivo atual">💾 Salvar</button>
+        <button id="run" aria-label="Executar código">▶️ Executar</button>
+      </div>
+    </main>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
+
+
+  <script>
+    // main.js - Lógica principal do editor
+let editor;
+let arquivos = JSON.parse(localStorage.getItem('arquivos')) || {
+  "index.html": {
+    content: "<h1>Olá Mundo!</h1>",
+    language: "html"
+  },
+  "style.css": {
+    content: "body { background: #f0f0f0; color: black; }",
+    language: "css"
+  },
+  "script.js": {
+    content: "console.log('Olá do JS');",
+    language: "javascript"
+  }
+};
+let arquivoAtual = "index.html";
+
+function atualizarAbas() {
+  const tabBar = document.getElementById('tab-bar');
+  const fileList = document.getElementById('file-list');
+  tabBar.innerHTML = '';
+  fileList.innerHTML = '';
+  for (const nome in arquivos) {
+    const tab = document.createElement('button');
+    tab.textContent = nome;
+    tab.className = nome === arquivoAtual ? 'active' : '';
+    tab.onclick = () => carregarArquivo(nome);
+    tabBar.appendChild(tab);
+
+    const li = document.createElement('li');
+    li.className = nome === arquivoAtual ? 'active' : '';
+    li.textContent = nome;
+    li.onclick = () => carregarArquivo(nome);
+    li.tabIndex = 0;
+    li.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') carregarArquivo(nome); };
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = "×";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.onclick = e => {
+      e.stopPropagation();
+      excluirArquivo(nome);
+    };
+    li.appendChild(deleteBtn);
+    fileList.appendChild(li);
+  }
+}
+
+function carregarArquivo(nome) {
+  if (!arquivos[nome]) return;
+  if (arquivoAtual !== nome) salvarArquivo(arquivoAtual);
+  arquivoAtual = nome;
+  editor.setValue(arquivos[nome].content);
+  monaco.editor.setModelLanguage(editor.getModel(), arquivos[nome].language);
+  document.getElementById('language').value = arquivos[nome].language;
+  atualizarAbas();
+}
+
+function salvarArquivo(nome) {
+  if (arquivos[nome]) {
+    arquivos[nome].content = editor.getValue();
+    localStorage.setItem('arquivos', JSON.stringify(arquivos));
+  }
+}
+
+function validarNomeArquivo(nome) {
+  return /^[\w\-.]+$/i.test(nome);
+}
+
+function criarNovoArquivo() {
+  let nome = prompt("Nome do novo arquivo (ex: script.js):");
+  if (!nome) return;
+  nome = nome.trim();
+  if (!validarNomeArquivo(nome)) return alert("Nome inválido.");
+  if (arquivos[nome]) return alert("Arquivo já existe.");
+  const ext = nome.split('.').pop().toLowerCase();
+  const map = { html: 'html', js: 'javascript', css: 'css', py: 'python' };
+  arquivos[nome] = { content: '', language: map[ext] || 'plaintext' };
+  carregarArquivo(nome);
+}
+
+function excluirArquivo(nome) {
+  if (!arquivos[nome]) return;
+  if (confirm(`Excluir o arquivo "${nome}"?`)) {
+    if (arquivoAtual === nome) {
+      salvarArquivo(nome);
+      delete arquivos[nome];
+      const nomes = Object.keys(arquivos);
+      carregarArquivo(nomes[0] || "index.html");
+    } else {
+      delete arquivos[nome];
+    }
+    localStorage.setItem('arquivos', JSON.stringify(arquivos));
+    atualizarAbas();
+  }
+}
+
+async function executarPreview() {
+  salvarArquivo(arquivoAtual);
+  const runBtn = document.getElementById('run');
+  runBtn.classList.add('loading');
+  runBtn.disabled = true;
+  const preview = document.getElementById('preview');
+  document.getElementById('monaco-editor').classList.remove('active');
+  preview.classList.add('active');
+  document.getElementById('voltar-editor').style.display = 'inline-block';
+
+  const html = arquivos["index.html"]?.content || "";
+  const css = arquivos["style.css"]?.content || "";
+  const js = arquivos["script.js"]?.content || "";
+  const finalCode = `<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+
+  await new Promise(r => setTimeout(r, 200));
+
+  const iframe = document.createElement('iframe');
+  iframe.srcdoc = finalCode;
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+  preview.innerHTML = '';
+  preview.appendChild(iframe);
+  runBtn.classList.remove('loading');
+  runBtn.disabled = false;
+}
+
+function voltarEditor() {
+  document.getElementById('preview').classList.remove('active');
+  document.getElementById('monaco-editor').classList.add('active');
+  document.getElementById('voltar-editor').style.display = 'none';
+}
+
+function alternarTema() {
+  const body = document.body;
+  const btn = document.getElementById('toggle-theme');
+  body.classList.toggle('light-theme');
+  const isLight = body.classList.contains('light-theme');
+  monaco.editor.setTheme(isLight ? 'vs' : 'vs-dark');
+  btn.setAttribute('aria-pressed', isLight.toString());
+  localStorage.setItem('tema', isLight ? 'light' : 'dark');
+}
+
+require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+require(['vs/editor/editor.main'], function () {
+  editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+    value: arquivos[arquivoAtual].content,
+    language: arquivos[arquivoAtual].language,
+    theme: 'vs-dark',
+    automaticLayout: true,
+    fontSize: 16,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+  });
+
+  const temaSalvo = localStorage.getItem('tema');
+  if (temaSalvo === 'light') {
+    document.body.classList.add('light-theme');
+    monaco.editor.setTheme('vs');
+    document.getElementById('toggle-theme').setAttribute('aria-pressed', 'true');
+  }
+
+  atualizarAbas();
+  document.getElementById('language').addEventListener('change', e => {
+    const lang = e.target.value;
+    arquivos[arquivoAtual].language = lang;
+    monaco.editor.setModelLanguage(editor.getModel(), lang);
+    salvarArquivo(arquivoAtual);
+  });
+  document.getElementById('new-file-btn').addEventListener('click', criarNovoArquivo);
+  document.getElementById('run').addEventListener('click', executarPreview);
+  document.getElementById('voltar-editor').addEventListener('click', voltarEditor);
+  document.getElementById('toggle-theme').addEventListener('click', alternarTema);
+
+  // Botão Salvar Arquivo
+  document.getElementById('save').addEventListener('click', () => {
+    salvarArquivo(arquivoAtual);
+    alert(`Arquivo "${arquivoAtual}" salvo com sucesso!`);
+  });
+
+  let debounceTimeout;
+  editor.onDidChangeModelContent(() => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => salvarArquivo(arquivoAtual), 500);
+  });
+});
+
+  </script>
+</body>
+</html>
